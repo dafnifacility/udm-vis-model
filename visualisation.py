@@ -38,6 +38,7 @@ GREY = '#DDDDDD'
 def main(base_folder):
     outline_path = os.path.join(base_folder, 'arc-outline.gpkg')
 
+    # TODO check intended folder structure
     nc_paths = glob.glob(
         os.path.join(base_folder, 'natural_capital', '*.tif'))
     density_paths = glob.glob(
@@ -116,6 +117,7 @@ def main(base_folder):
 
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", BLUE])
 
+        # TODO check filename pattern
         dwellings, policy, _, _ = os.path.basename(fname).lower().split('_')
         if dwellings == 'expansion':
             dwellings = 'exp'
@@ -142,6 +144,8 @@ def main(base_folder):
             data_extent = rasterio.plot.plotting_extent(ds)
 
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
+
+        # TODO split any extension
         slug = os.path.basename(fname).replace('.tif', '')
         label = titleify(slug, sep='_')
 
@@ -163,6 +167,8 @@ def main(base_folder):
             data_extent = rasterio.plot.plotting_extent(ds)
 
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", GREY])
+
+        # TODO check filename pattern
         dwellings, grey_green, _ = os.path.basename(fname).split('_')
 
         if dwellings == 'expansion':
@@ -192,6 +198,8 @@ def main(base_folder):
             data_extent = rasterio.plot.plotting_extent(ds)
 
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
+
+        # TODO check filename pattern
         dwellings, grey_green, _ = os.path.basename(fname).split('_')
 
         if dwellings == 'expansion':
@@ -202,11 +210,9 @@ def main(base_folder):
             assert False, dwellings
 
         for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
+            plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
             plt.savefig(f"suit_{grey_green}_{dwellings}_{zoom}.png")
             plt.close()
-
-        print(fname)
 
     #
     # Development and dwellings
@@ -397,6 +403,7 @@ def dev_plot(fname, dev_fname, norm, arc_mask):
 
     dev_norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
 
+    # TODO check filename pattern
     year, rate, dwellings, policy, _ = os.path.basename(fname).split('_')
 
     if dwellings == 'expansion':
