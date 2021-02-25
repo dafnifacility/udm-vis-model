@@ -20,26 +20,27 @@ matplotlib.rcParams["figure.figsize"] = (12, 13)
 matplotlib.rcParams["figure.dpi"] = 72
 matplotlib.rcParams["font.size"] = 16
 
+#
+# Constants for plotting
+#
+EXTENTS = {
+    'arc': (418_000, 573_000, 170_000, 325_000),
+    'cty': (475_000, 500_000, 225_000, 250_000),
+    'ngb': (487_000, 492_000, 231_500, 236_500)
+}
+GREEN = '#219653'
+BLUE = '#2D9CDB'
+YELLOW = '#F2C94C'
+RED = '#EB5757'
+GREY = '#DDDDDD'
+
+
 def main(base_folder):
     outline_path = os.path.join(base_folder, 'arc-outline.gpkg')
 
     with fiona.open(outline_path, "r") as shapefile:
         arc_mask = [feature["geometry"] for feature in shapefile]
 
-    arc_extent = (418_000, 573_000, 170_000, 325_000)
-    cty_extent = (475_000, 500_000, 225_000, 250_000)
-    ngb_extent = (487_000, 492_000, 231_500, 236_500)
-    extents = {
-        'arc': arc_extent,
-        'cty': cty_extent,
-        'ngb': ngb_extent
-    }
-
-    green = '#219653'
-    blue = '#2D9CDB'
-    yellow = '#F2C94C'
-    red = '#EB5757'
-    grey = '#DDDDDD'
 
     #
     # Natural Capital scores
@@ -75,7 +76,7 @@ def main(base_folder):
 
         label = f"{text} Score"
 
-        plot_natural_capital_score(data, data_extent, service, label, extents, norm, green)
+        plot_natural_capital_score(data, data_extent, service, label, norm)
 
         del data
         gc.collect()
@@ -88,7 +89,7 @@ def main(base_folder):
     with rasterio.open(nc_paths[0]) as ds:
         data_extent = rasterio.plot.plotting_extent(ds)
 
-    plot_food_non_food_natural_capital(food, non_food, data_extent, green, yellow, extents)
+    plot_food_non_food_natural_capital(food, non_food, data_extent)
 
     #
     # Density
@@ -104,7 +105,7 @@ def main(base_folder):
             data = data[0]  # ignore first dimension, just want 2D array
             data_extent = rasterio.plot.plotting_extent(ds)
 
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", blue])
+        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", BLUE])
 
         dwellings, policy, _, _ = os.path.basename(fname).lower().split('_')
         if dwellings == 'expansion':
@@ -115,7 +116,7 @@ def main(base_folder):
             assert False, dwellings
 
         for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, extents[zoom], cmap=cmap, norm=norm, label="Potential dwellings per hectare")
+            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Potential dwellings per hectare")
             plt.savefig(f"density_{policy}_{dwellings}_{zoom}.png")
             plt.close()
 
@@ -134,12 +135,12 @@ def main(base_folder):
             data = data[0]  # ignore first dimension, just want 2D array
             data_extent = rasterio.plot.plotting_extent(ds)
 
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", yellow])
+        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
         slug = os.path.basename(fname).replace('.tif', '')
         label = titleify(slug, sep='_')
 
         for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, extents[zoom], cmap=cmap, norm=norm, label=label)
+            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label=label)
             plt.savefig(f"attractor_{slug}_{zoom}.png")
             plt.close()
 
@@ -159,7 +160,7 @@ def main(base_folder):
             data = data[0]  # ignore first dimension, just want 2D array
             data_extent = rasterio.plot.plotting_extent(ds)
 
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", grey])
+        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", GREY])
         dwellings, grey_green, _ = os.path.basename(fname).split('_')
 
         if dwellings == 'expansion':
@@ -170,7 +171,7 @@ def main(base_folder):
             assert False, dwellings
 
         for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, extents[zoom], cmap=cmap, norm=norm, label="Combined Constraints")
+            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Constraints")
             plt.savefig(f"constraint_{grey_green}_{dwellings}_{zoom}.png")
             plt.close()
 
@@ -192,7 +193,7 @@ def main(base_folder):
             data = data[0]  # ignore first dimension, just want 2D array
             data_extent = rasterio.plot.plotting_extent(ds)
 
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", yellow])
+        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
         dwellings, grey_green, _ = os.path.basename(fname).split('_')
 
         if dwellings == 'expansion':
@@ -203,7 +204,7 @@ def main(base_folder):
             assert False, dwellings
 
         for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, extents[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
+            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
             plt.savefig(f"suit_{grey_green}_{dwellings}_{zoom}.png")
             plt.close()
 
@@ -225,7 +226,7 @@ def main(base_folder):
     vmin, vmax
 
     for fname, dev_fname in zip(dwellings_paths, development_paths):
-        dev_plot(fname, dev_fname, norm, arc_mask, red, blue, extents)
+        dev_plot(fname, dev_fname, norm, arc_mask)
         gc.collect()
 
 
@@ -277,11 +278,11 @@ def plot_map(raster, raster_extent, extent, label=None, cmap='Greens', norm=None
     return ax
 
 
-def plot_natural_capital_score(data, data_extent, service, label, extents, norm, green):
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", green])
+def plot_natural_capital_score(data, data_extent, service, label, norm):
+    cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", GREEN])
 
     for zoom in ('arc', 'cty', 'ngb'):
-        plot_map(data, data_extent, extents[zoom], cmap=cmap, norm=norm, label=label)
+        plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label=label)
         plt.savefig(f"natcap_{service.lower()}_{zoom}.png")
 
         fig = plt.gcf()
@@ -317,10 +318,10 @@ def get_food_non(nc_paths, arc_mask):
     non_food[non_food < food] = -1
     return food, non_food
 
-def plot_food_non_food_natural_capital(food, non_food, data_extent, green, yellow, extents):
+def plot_food_non_food_natural_capital(food, non_food, data_extent):
     norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
-    greens = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff00", green])
-    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff00", yellow])
+    greens = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff00", GREEN])
+    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff00", YELLOW])
     greens.set_under(color=(1, 1, 1, 0))
     reds.set_under(color=(1, 1, 1, 0))
 
@@ -329,7 +330,7 @@ def plot_food_non_food_natural_capital(food, non_food, data_extent, green, yello
         fig, ax = plt.subplots(subplot_kw={'projection':osgb}, figsize=(12, 13))
         ax.set_frame_on(False)
         ax = plt.axes([0, 0.07, 1, 1], projection=osgb)
-        ax.set_extent(extents[zoom], crs=osgb)
+        ax.set_extent(EXTENTS[zoom], crs=osgb)
 
         ax.imshow(food, origin='upper', extent=data_extent, transform=osgb, cmap=reds, norm=norm)
         ax.imshow(non_food, origin='upper', extent=data_extent, transform=osgb, cmap=greens, norm=norm)
@@ -387,7 +388,7 @@ def titleify(str_, sep=" "):
     return label.strip()
 
 
-def dev_plot(fname, dev_fname, norm, arc_mask, red, blue, extents):
+def dev_plot(fname, dev_fname, norm, arc_mask):
     with rasterio.open(fname) as ds:
         data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
         data = data[0]  # ignore first dimension, just want 2D array
@@ -417,8 +418,8 @@ def dev_plot(fname, dev_fname, norm, arc_mask, red, blue, extents):
 
     out_name = f"dwellings_{policy}_{dwellings}_{rate}_{year}_zoom.png"
 
-    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffadad", red])
-    blues = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", blue])
+    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffadad", RED])
+    blues = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", BLUE])
     reds.set_under(color=(1, 1, 1, 0))
     blues.set_under(color=(1, 1, 1, 0))
 
@@ -428,7 +429,7 @@ def dev_plot(fname, dev_fname, norm, arc_mask, red, blue, extents):
         ax.set_frame_on(False)
         ax = plt.axes([0, 0.07, 1, 1], projection=osgb)
         ax.set_frame_on(False)
-        ax.set_extent(extents[zoom], crs=osgb)
+        ax.set_extent(EXTENTS[zoom], crs=osgb)
 
         ax.imshow(dev_data, origin='upper', extent=data_extent, transform=osgb, cmap=blues, norm=dev_norm)
         ax.imshow(data, origin='upper', extent=data_extent, transform=osgb, cmap=reds, norm=norm)
