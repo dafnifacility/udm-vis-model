@@ -38,16 +38,27 @@ GREY = '#DDDDDD'
 def main(base_folder):
     outline_path = os.path.join(base_folder, 'arc-outline.gpkg')
 
+    nc_paths = glob.glob(
+        os.path.join(base_folder, 'natural_capital', '*.tif'))
+    density_paths = glob.glob(
+        os.path.join(base_folder, 'inputs', 'Density Surfaces', 'TIFF', '*.tif'))
+    attractor_paths = glob.glob(
+        os.path.join(base_folder, 'inputs', 'Attractors', 'TIFF', '*.tif'))
+    constraint_paths = glob.glob(
+        os.path.join(base_folder, 'inputs', 'Constraints', 'TIFF', '*.tif'))
+    suitability_paths = glob.glob(
+        os.path.join(base_folder, 'outputs', 'Suitability Surfaces', 'TIFF', '*.tif'))
+    dwellings_paths = sorted(glob.glob(
+        os.path.join(base_folder, 'outputs', '**', 'Dwellings', 'TIFF', '*.tif')))
+    development_paths = sorted(glob.glob(
+        os.path.join(base_folder, 'outputs', '**', 'Development', 'TIFF', '*.tif')))
+
     with fiona.open(outline_path, "r") as shapefile:
         arc_mask = [feature["geometry"] for feature in shapefile]
-
 
     #
     # Natural Capital scores
     #
-    nc_paths = glob.glob(
-        os.path.join(base_folder, 'natural_capital', '*.tif'))
-    nc_paths
 
     # hard code 0-10 range - note that habitat scores go above 10, simply capping here
     norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
@@ -94,8 +105,6 @@ def main(base_folder):
     #
     # Density
     #
-    density_paths = glob.glob(
-        os.path.join(base_folder, 'Scenarios', 'UDM', 'ATI FINAL', 'Inputs', 'Density Surfaces', 'TIFF', '*.tif'))
     vmin, vmax = files_raster_min_max(density_paths, arc_mask)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
 
@@ -123,9 +132,6 @@ def main(base_folder):
     #
     # Attractors
     #
-    attractor_paths = glob.glob(
-        os.path.join(base_folder, 'Scenarios', 'UDM', 'ATI FINAL', 'Inputs', 'Attractors', 'TIFF', '*.tif'))
-
     vmin, vmax = files_raster_min_max(attractor_paths, arc_mask)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
 
@@ -147,10 +153,6 @@ def main(base_folder):
     #
     # Constraints
     #
-    constraint_paths = glob.glob(
-        os.path.join(base_folder, 'Scenarios', 'UDM', 'ATI FINAL', 'Inputs', 'Constraints', 'TIFF', '*.tif'))
-    constraint_paths
-
     vmin, vmax = files_raster_min_max(constraint_paths, arc_mask)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
 
@@ -178,10 +180,6 @@ def main(base_folder):
     #
     # Suitability
     #
-    suitability_paths = glob.glob(
-        os.path.join(base_folder, 'Scenarios', 'UDM', 'ATI FINAL', 'Outputs', 'Suitability Surfaces', 'TIFF', '*.tif'))
-    suitability_paths
-
     vmin, vmax = files_raster_min_max(suitability_paths, arc_mask)
     if vmin < 0:
         vmin = 0
@@ -213,14 +211,6 @@ def main(base_folder):
     #
     # Development and dwellings
     #
-    dwellings_paths = sorted(glob.glob(
-        os.path.join(base_folder, 'Scenarios', 'UDM', 'ATI FINAL', 'Outputs', '**', 'Dwellings', 'TIFF', '*.tif')))
-    dwellings_paths
-
-    development_paths = sorted(glob.glob(
-        os.path.join(base_folder, 'Scenarios', 'UDM', 'ATI FINAL', 'Outputs', '**', 'Development', 'TIFF', '*.tif')))
-    development_paths
-
     vmin, vmax = files_raster_min_max(dwellings_paths)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
     vmin, vmax
