@@ -12,6 +12,7 @@ import rasterio.plot
 from matplotlib.lines import Line2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+import json
 import gc
 import glob
 import os
@@ -460,4 +461,6 @@ def dev_plot(fname, dev_fname, norm, arc_mask):
 
 
 if __name__ == '__main__':
-    main(".")
+    with open("config.json", 'r') as fh:
+        base_folder = json.load(fh)['data_folder']
+    main(base_folder)
