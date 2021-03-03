@@ -1,0 +1,18 @@
+kind: Model
+apiVersion: v1alpha4
+metadata:
+  displayName: UDM Visualisation Model
+  type: Visualisation
+  name: udmVisModel
+  summary: >
+    Model to produce visualisations for the outputs of OpenUDM.
+  description: >
+    OpenUDM has been used in a number of contexts to explore urban development scenarios.
+    For example, this interactive article about urban development in the Oxford-Cambridge Arc introduces the modelling
+    process and analyses the potential impacts of future development on the natural environment.
+    Alistair Ford, Stuart Barr, Richard Dawson, James Virgo, Michael Batty, Jim Hall (2019) A multi-scale urban
+    integrated assessment framework for climate change studies: A flooding application. Computers, Environment and
+    Urban Systems. 75, 229-243. https://doi.org/10.1016/j.compenvurbsys.2019.02.005.
+    
+    Pairing this Model with OpenUDM will produce visualisations to allow users of OpenUDM to interprety the results of 
+    the Model. Publishing the outputs of this Model to the NID will create a dataset containing images of the visualisations.

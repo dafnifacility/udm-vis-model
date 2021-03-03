@@ -1,0 +1,36 @@
+name: Upload to dafni
+
+on:
+  release:
+   types: [published]
+
+   
+jobs:
+  publish-udm:
+    name: Publish UDM to DAFNI
+    runs-on: ubuntu-latest
+    steps:
+    -
+      name: Checkout code
+      uses: actions/checkout@v2
+    -
+      name: Docker Build
+      run: docker build -t udm-vis-dafni .
+    -
+      name: Compress docker image
+      run: |
+        docker save udm-vis-dafni:latest |
+        gzip > udm-vis-dafni.tar.gz
+    - 
+      name: Set tag as env
+      run: echo "TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    -
+      name: Upload To DAFNI
+      uses: dafnifacility/dafni-model-uploader@v1.4
+      with:
+        definition-path: './model_definition.yaml'
+        image-path: './udm-vis-dafni.tar.gz'
+        username: ${{ secrets.DAFNI_SERVICE_ACCOUNT_USERNAME }}
+        password: ${{ secrets.DAFNI_SERVICE_ACCOUNT_PASSWORD }}
+        version-message: ${{ env.TAG }}
+

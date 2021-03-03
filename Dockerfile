@@ -6,8 +6,14 @@ RUN apt-get update \
       libgeos-dev \
       libproj-dev \
       proj-bin -y
-RUN python -m pip install numpy
-ADD ./* /
+RUN python -m pip install numpy \
+&&  python -m pip install --no-binary :all: shapely
+RUN mkdir -p /code
+WORKDIR /code
+ADD requirements.txt requirements.txt
 RUN python -m pip install -r requirements.txt
 
-CMD python visualisation.py
+ADD data ./data
+ADD ./* ./
+
+CMD python visualisation.py\
