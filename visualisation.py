@@ -62,7 +62,8 @@ def main(base_folder):
 
     for zoom in ('arc', 'cty', 'ngb'):
         plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
-        plt.savefig(f"suitability_{zoom}.png")
+        output_fname = os.path.join(base_folder, f"suitability_{zoom}.png")
+        plt.savefig(output_fname)
         plt.close()
 
     #
@@ -70,7 +71,7 @@ def main(base_folder):
     #
     vmin, vmax = file_raster_min_max(dwellings_path)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-    plot_development_and_dwellings(dwellings_path, development_path, norm, arc_mask)
+    plot_development_and_dwellings(base_folder, dwellings_path, development_path, norm, arc_mask)
 
 
 def files_raster_min_max(paths, mask=None):
@@ -123,7 +124,7 @@ def plot_map(raster, raster_extent, extent, label=None, cmap='Greens', norm=None
     return ax
 
 
-def plot_development_and_dwellings(fname, dev_fname, norm, arc_mask):
+def plot_development_and_dwellings(base_folder, fname, dev_fname, norm, arc_mask):
     with rasterio.open(fname) as ds:
         data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
         data = data[0]  # ignore first dimension, just want 2D array
@@ -179,7 +180,8 @@ def plot_development_and_dwellings(fname, dev_fname, norm, arc_mask):
         ]
         ax.legend(handles=legend_elements, bbox_to_anchor=(0.55, -0.075), loc='lower left', borderaxespad=0.)
 
-        plt.savefig(f"dwellings_{zoom}.png")
+        output_fname = os.path.join(base_folder, f"dwellings_{zoom}.png")
+        plt.savefig(output_fname)
 
         fig = plt.gcf()
         fig.clf()
