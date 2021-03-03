@@ -1,10 +1,8 @@
 name: Upload to dafni
 
-on:
-  release:
-   types: [published]
+on: push
 
-   
+
 jobs:
   publish-udm:
     name: Publish UDM to DAFNI
