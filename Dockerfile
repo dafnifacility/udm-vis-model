@@ -13,7 +13,6 @@ WORKDIR /code
 ADD requirements.txt requirements.txt
 RUN python -m pip install -r requirements.txt
 
-ADD data ./data
 ADD ./* ./
 
 CMD python visualisation.py\
