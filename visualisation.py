@@ -13,8 +13,6 @@ from matplotlib.lines import Line2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 import json
-import gc
-import glob
 import os
 
 matplotlib.rcParams["figure.figsize"] = (12, 13)
@@ -37,215 +35,65 @@ GREY = '#DDDDDD'
 
 
 def main(base_folder):
+    """Plot images from OpenUDM outputs
+    """
+    suitability_path = os.path.join(base_folder, 'out_cell_suit.asc')
+    dwellings_path = os.path.join(base_folder, 'out_cell_dph.asc')
+    development_path = os.path.join(base_folder, 'out_cell_dev.asc')
+
     outline_path = os.path.join(base_folder, 'arc-outline.gpkg')
-
-    # TODO check intended folder structure
-    nc_paths = glob.glob(
-        os.path.join(base_folder, 'natural_capital', '*.tif'))
-    density_paths = glob.glob(
-        os.path.join(base_folder, 'inputs', 'Density Surfaces', 'TIFF', '*.tif'))
-    attractor_paths = glob.glob(
-        os.path.join(base_folder, 'inputs', 'Attractors', 'TIFF', '*.tif'))
-    constraint_paths = glob.glob(
-        os.path.join(base_folder, 'inputs', 'Constraints', 'TIFF', '*.tif'))
-    suitability_paths = glob.glob(
-        os.path.join(base_folder, 'outputs', 'Suitability Surfaces', 'TIFF', '*.tif'))
-    dwellings_paths = sorted(glob.glob(
-        os.path.join(base_folder, 'outputs', '**', 'Dwellings', 'TIFF', '*.tif')))
-    development_paths = sorted(glob.glob(
-        os.path.join(base_folder, 'outputs', '**', 'Development', 'TIFF', '*.tif')))
-
     with fiona.open(outline_path, "r") as shapefile:
         arc_mask = [feature["geometry"] for feature in shapefile]
 
     #
-    # Natural Capital scores
-    #
-
-    # hard code 0-10 range - note that habitat scores go above 10, simply capping here
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
-
-    for fname in nc_paths:
-        with rasterio.open(fname) as ds:
-            data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
-            data = data[0]  # ignore first dimension, just want 2D array
-            data_extent = rasterio.plot.plotting_extent(ds)
-
-        if 'Habitat' in fname:
-            m = numpy.max(data)
-            data = (data.astype("float") * 10) / m
-
-        service = os.path.basename(fname) \
-            .replace('Arc_FreeData_', '') \
-            .replace('_25m_MCA.tif', '')
-
-        text = service.replace('Q', ' Q') \
-            .replace('Control', ' Control') \
-            .replace('Carbon', 'Carbon Storage') \
-            .replace('Erosion', 'Erosion Prevention') \
-            .replace('Flood', 'Flood Protection') \
-            .replace('Food', 'Food Production') \
-            .replace('Noise', 'Noise Reduction')
-
-        label = f"{text} Score"
-
-        plot_natural_capital_score(data, data_extent, service, label, norm)
-
-        del data
-        gc.collect()
-
-    #
-    # Natural Capital food/non-food
-    #
-    food, non_food = get_food_non(nc_paths, arc_mask)
-
-    with rasterio.open(nc_paths[0]) as ds:
-        data_extent = rasterio.plot.plotting_extent(ds)
-
-    plot_food_non_food_natural_capital(food, non_food, data_extent)
-
-    #
-    # Density
-    #
-    vmin, vmax = files_raster_min_max(density_paths, arc_mask)
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-
-    for fname in density_paths:
-        with rasterio.open(fname) as ds:
-            data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
-            data = data[0]  # ignore first dimension, just want 2D array
-            data_extent = rasterio.plot.plotting_extent(ds)
-
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", BLUE])
-
-        # TODO check filename pattern
-        dwellings, policy, _, _ = os.path.basename(fname).lower().split('_')
-        if dwellings == 'expansion':
-            dwellings = 'exp'
-        elif dwellings == 'settlements':
-            dwellings = 'set'
-        else:
-            assert False, dwellings
-
-        for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Potential dwellings per hectare")
-            plt.savefig(f"density_{policy}_{dwellings}_{zoom}.png")
-            plt.close()
-
-    #
-    # Attractors
-    #
-    vmin, vmax = files_raster_min_max(attractor_paths, arc_mask)
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-
-    for fname in attractor_paths:
-        with rasterio.open(fname) as ds:
-            data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
-            data = data[0]  # ignore first dimension, just want 2D array
-            data_extent = rasterio.plot.plotting_extent(ds)
-
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
-
-        # TODO split any extension
-        slug = os.path.basename(fname).replace('.tif', '')
-        label = titleify(slug, sep='_')
-
-        for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label=label)
-            plt.savefig(f"attractor_{slug}_{zoom}.png")
-            plt.close()
-
-    #
-    # Constraints
-    #
-    vmin, vmax = files_raster_min_max(constraint_paths, arc_mask)
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-
-    for fname in constraint_paths:
-        with rasterio.open(fname) as ds:
-            data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
-            data = data[0]  # ignore first dimension, just want 2D array
-            data_extent = rasterio.plot.plotting_extent(ds)
-
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", GREY])
-
-        # TODO check filename pattern
-        dwellings, grey_green, _ = os.path.basename(fname).split('_')
-
-        if dwellings == 'expansion':
-            dwellings = 'exp'
-        elif dwellings == 'settlements':
-            dwellings = 'set'
-        else:
-            assert False, dwellings
-
-        for zoom in ('arc', 'cty', 'ngb'):
-            _ = plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Constraints")
-            plt.savefig(f"constraint_{grey_green}_{dwellings}_{zoom}.png")
-            plt.close()
-
-    #
     # Suitability
     #
-    vmin, vmax = files_raster_min_max(suitability_paths, arc_mask)
+    vmin, vmax = file_raster_min_max(suitability_path, arc_mask)
     if vmin < 0:
         vmin = 0
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
 
-    for fname in suitability_paths:
-        with rasterio.open(fname) as ds:
-            data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
-            data = data[0]  # ignore first dimension, just want 2D array
-            data_extent = rasterio.plot.plotting_extent(ds)
+    with rasterio.open(suitability_path) as ds:
+        data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
+        data = data[0]  # ignore first dimension, just want 2D array
+        data_extent = rasterio.plot.plotting_extent(ds)
 
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
+    cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", YELLOW])
 
-        # TODO check filename pattern
-        dwellings, grey_green, _ = os.path.basename(fname).split('_')
-
-        if dwellings == 'expansion':
-            dwellings = 'exp'
-        elif dwellings == 'settlements':
-            dwellings = 'set'
-        else:
-            assert False, dwellings
-
-        for zoom in ('arc', 'cty', 'ngb'):
-            plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
-            plt.savefig(f"suit_{grey_green}_{dwellings}_{zoom}.png")
-            plt.close()
+    for zoom in ('arc', 'cty', 'ngb'):
+        plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
+        plt.savefig(f"suitability_{zoom}.png")
+        plt.close()
 
     #
     # Development and dwellings
     #
-    vmin, vmax = files_raster_min_max(dwellings_paths)
+    vmin, vmax = file_raster_min_max(dwellings_path)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-    vmin, vmax
-
-    for fname, dev_fname in zip(dwellings_paths, development_paths):
-        dev_plot(fname, dev_fname, norm, arc_mask)
-        gc.collect()
+    plot_development_and_dwellings(dwellings_path, development_path, norm, arc_mask)
 
 
 def files_raster_min_max(paths, mask=None):
     # loop over to get vmax
     vmin, vmax = 0, 0
     for fname in paths:
-        with rasterio.open(fname) as ds:
-            if mask is not None:
-                data, _ = rasterio.mask.mask(ds, mask, crop=True)
-                data = data[0]
-            else:
-                data = ds.read(1)
-            data_max = numpy.max(data)
-            data_min = numpy.min(data)
-            if data_max > vmax:
-                vmax = data_max
-            if data_min < vmin:
-                vmin = data_min
+        vmin, vmax = file_raster_min_max(fname, mask, vmin, vmax)
+    return vmin, vmax
 
-    if vmin < 0:
-        vmin = 0
+
+def file_raster_min_max(fname, mask=None, vmin=0, vmax=0):
+    with rasterio.open(fname) as ds:
+        if mask is not None:
+            data, _ = rasterio.mask.mask(ds, mask, crop=True)
+            data = data[0]
+        else:
+            data = ds.read(1)
+        data_max = numpy.max(data)
+        data_min = numpy.min(data)
+        if data_max > vmax:
+            vmax = data_max
+        if data_min < vmin:
+            vmin = data_min
 
     return vmin, vmax
 
@@ -275,117 +123,7 @@ def plot_map(raster, raster_extent, extent, label=None, cmap='Greens', norm=None
     return ax
 
 
-def plot_natural_capital_score(data, data_extent, service, label, norm):
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", GREEN])
-
-    for zoom in ('arc', 'cty', 'ngb'):
-        plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label=label)
-        plt.savefig(f"natcap_{service.lower()}_{zoom}.png")
-
-        fig = plt.gcf()
-        fig.clf()
-        plt.close()
-        gc.collect()
-
-
-def get_food_non(nc_paths, arc_mask):
-    non_food = None
-    food = None
-    for fname in nc_paths:
-        with rasterio.open(fname) as ds:
-            data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
-            data = data[0]  # ignore first dimension, just want 2D array
-            data_extent = rasterio.plot.plotting_extent(ds)
-        if 'Food' in fname:
-            food = data
-            continue
-
-        if 'Habitat' in fname:
-            m = numpy.max(data)
-            data = (data * 10) / m
-
-        if non_food is None:
-            non_food = data
-        else:
-            non_food = numpy.maximum.reduce([non_food, data])
-
-        del data
-        gc.collect
-    food[food < non_food] = -1
-    non_food[non_food < food] = -1
-    return food, non_food
-
-def plot_food_non_food_natural_capital(food, non_food, data_extent):
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
-    greens = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff00", GREEN])
-    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff00", YELLOW])
-    greens.set_under(color=(1, 1, 1, 0))
-    reds.set_under(color=(1, 1, 1, 0))
-
-    for zoom in ('arc', 'cty', 'ngb'):
-        osgb = ccrs.epsg(27700)
-        fig, ax = plt.subplots(subplot_kw={'projection':osgb}, figsize=(12, 13))
-        ax.set_frame_on(False)
-        ax = plt.axes([0, 0.07, 1, 1], projection=osgb)
-        ax.set_extent(EXTENTS[zoom], crs=osgb)
-
-        ax.imshow(food, origin='upper', extent=data_extent, transform=osgb, cmap=reds, norm=norm)
-        ax.imshow(non_food, origin='upper', extent=data_extent, transform=osgb, cmap=greens, norm=norm)
-
-        # add the colorbars
-        nf_cax = inset_axes(
-            ax,
-            width="40%",
-            height="3%",
-            loc='lower left',
-            bbox_to_anchor=(0.05, -0.05, 1, 1),
-            bbox_transform=ax.transAxes,
-            borderpad=0,
-        )
-        fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=greens), cax=nf_cax,
-                    orientation='horizontal',
-                    label="Non-food Natural Capital Score")
-
-        f_cax = inset_axes(
-            ax,
-            width="40%",
-            height="3%",
-            loc='lower left',
-            bbox_to_anchor=(0.55, -0.05, 1, 1),
-            bbox_transform=ax.transAxes,
-            borderpad=0,
-        )
-        fig.colorbar(matplotlib.cm.ScalarMappable(norm=norm, cmap=reds), cax=f_cax,
-                    orientation='horizontal',
-                    label="Food Natural Capital Score")
-
-        # don't draw axes outline/background rectangle
-        ax.set_frame_on(False)
-        f_cax.set_frame_on(False)
-        nf_cax.set_frame_on(False)
-        plt.savefig(f"natcap_combined_{zoom}.png")
-
-        fig = plt.gcf()
-        fig.clf()
-        plt.close()
-        gc.collect()
-
-
-def titleify(str_, sep=" "):
-    words = iter(str_.split(sep))
-    stop = {"by", "the", "of", "to"}
-
-    label = next(words).title() + " "
-    for word in words:
-        if word not in stop:
-            label += word.title()
-        else:
-            label += word
-        label += " "
-    return label.strip()
-
-
-def dev_plot(fname, dev_fname, norm, arc_mask):
+def plot_development_and_dwellings(fname, dev_fname, norm, arc_mask):
     with rasterio.open(fname) as ds:
         data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
         data = data[0]  # ignore first dimension, just want 2D array
@@ -403,18 +141,6 @@ def dev_plot(fname, dev_fname, norm, arc_mask):
         dev_data[dev_data == 0] = 1
 
     dev_norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
-
-    # TODO check filename pattern
-    year, rate, dwellings, policy, _ = os.path.basename(fname).split('_')
-
-    if dwellings == 'expansion':
-        dwellings = 'exp'
-    elif dwellings == 'settlements':
-        dwellings = 'set'
-    else:
-        assert False, dwellings
-
-    out_name = f"dwellings_{policy}_{dwellings}_{rate}_{year}_zoom.png"
 
     reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffadad", RED])
     blues = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", BLUE])
@@ -453,7 +179,7 @@ def dev_plot(fname, dev_fname, norm, arc_mask):
         ]
         ax.legend(handles=legend_elements, bbox_to_anchor=(0.55, -0.075), loc='lower left', borderaxespad=0.)
 
-        plt.savefig(out_name.replace('zoom', zoom))
+        plt.savefig(f"dwellings_{zoom}.png")
 
         fig = plt.gcf()
         fig.clf()
