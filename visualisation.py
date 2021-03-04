@@ -37,6 +37,7 @@ GREY = '#DDDDDD'
 def main(base_folder):
     """Plot images from OpenUDM outputs
     """
+    print("Data contents", os.listdir(base_folder))
     suitability_path = os.path.join(base_folder, 'out_cell_suit.asc')
     dwellings_path = os.path.join(base_folder, 'out_cell_dph.asc')
     development_path = os.path.join(base_folder, 'out_cell_dev.asc')
@@ -62,7 +63,7 @@ def main(base_folder):
 
     for zoom in ('arc', 'cty', 'ngb'):
         plot_map(data, data_extent, EXTENTS[zoom], cmap=cmap, norm=norm, label="Combined Suitability Score")
-        output_fname = os.path.join(base_folder, f"suitability_{zoom}.png")
+        output_fname = os.path.join(output_folder, f"suitability_{zoom}.png")
         plt.savefig(output_fname)
         plt.close()
 
@@ -190,5 +191,7 @@ def plot_development_and_dwellings(base_folder, fname, dev_fname, norm, arc_mask
 
 if __name__ == '__main__':
     with open("config.json", 'r') as fh:
-        base_folder = json.load(fh)['data_folder']
-    main(base_folder)
+        config  = json.load(fh)
+        base_folder = config['data_folder']
+        output_folder = config['output_folder']
+    main(base_folder, output_folder)

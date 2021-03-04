@@ -1,3 +1,4 @@
 {
-	"data_folder": "/data/inputs/"
+	"data_folder": "/data/inputs/",
+	"output_folder": "/data/outputs/"
 }

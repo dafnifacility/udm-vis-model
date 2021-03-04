@@ -15,4 +15,4 @@ RUN python -m pip install -r requirements.txt
 
 ADD ./* ./
 
-CMD python visualisation.py
+CMD python -u visualisation.py
