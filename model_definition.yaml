@@ -16,3 +16,5 @@ metadata:
     
     Pairing this Model with OpenUDM will produce visualisations to allow users of OpenUDM to interprety the results of 
     the Model. Publishing the outputs of this Model to the NID will create a dataset containing images of the visualisations.
+spec:
+  command: ["python", "visualisation.py"]
