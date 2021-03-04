@@ -36,12 +36,11 @@ GREY = "#DDDDDD"
 
 def main(base_folder, output_folder):
     """Plot images from OpenUDM outputs"""
-    print("Data contents", os.listdir(base_folder))
-    suitability_path = os.path.join(base_folder, "out_cell_suit.asc")
-    dwellings_path = os.path.join(base_folder, "out_cell_dph.asc")
-    development_path = os.path.join(base_folder, "out_cell_dev.asc")
+    suitability_path = os.path.join(base_folder, "data/out_cell_suit.asc")
+    dwellings_path = os.path.join(base_folder, "data/out_cell_dph.asc")
+    development_path = os.path.join(base_folder, "data/out_cell_dev.asc")
 
-    outline_path = os.path.join(base_folder, "arc-outline.gpkg")
+    outline_path = os.path.join(base_folder, "arc-outline/arc-outline.gpkg")
     with fiona.open(outline_path, "r") as shapefile:
         arc_mask = [feature["geometry"] for feature in shapefile]
 
@@ -250,6 +249,6 @@ def plot_development_and_dwellings(base_folder, fname, dev_fname, norm, arc_mask
 if __name__ == "__main__":
     with open("config.json", "r") as fh:
         config = json.load(fh)
-        base_folder = config["data_folder"]
+        base_folder = config["inputs_folder"]
         output_folder = config["output_folder"]
     main(base_folder, output_folder)

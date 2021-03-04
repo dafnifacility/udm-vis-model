@@ -18,3 +18,12 @@ metadata:
     the Model. Publishing the outputs of this Model to the NID will create a dataset containing images of the visualisations.
 spec:
   command: ["python", "-u", "visualisation.py"]
+  inputs:
+    dataslots:
+      - name: Arc Outline
+        path: inputs/arc-outline
+        description: Arc Outline GeoPackage
+        required: true
+        default:
+          - uid: f3015e08-b8ac-4973-933a-d0fccc94c4e1
+            versionUid: 94f62bcd-1fb0-4d95-b915-842d63211e13
