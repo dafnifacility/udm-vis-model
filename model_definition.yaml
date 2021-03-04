@@ -3,7 +3,7 @@ apiVersion: v1alpha4
 metadata:
   displayName: UDM Visualisation Model
   type: Visualisation
-  name: udmVisModel
+  name: udm-vis-model
   summary: >
     Model to produce visualisations for the outputs of OpenUDM.
   description: >

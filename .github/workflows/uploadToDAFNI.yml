@@ -30,5 +30,5 @@ jobs:
         image-path: './udm-vis-dafni.tar.gz'
         username: ${{ secrets.DAFNI_SERVICE_ACCOUNT_USERNAME }}
         password: ${{ secrets.DAFNI_SERVICE_ACCOUNT_PASSWORD }}
-        version-message: ${{ env.TAG }}
-
+        version-message: v1.0
+        parent-model: dd1f6b27-1526-4a49-83cf-8411f15b95a0
