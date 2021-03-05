@@ -30,7 +30,7 @@ EXTENTS = {
 GREEN = "#219653"
 BLUE = "#2D9CDB"
 YELLOW = "#F2C94C"
-RED = "#EB5757"
+RED = "#e00b0b"
 GREY = "#DDDDDD"
 
 
@@ -163,7 +163,7 @@ def plot_development_and_dwellings(output_folder, fname, dev_fname, norm, arc_ma
 
     dev_norm = matplotlib.colors.Normalize(vmin=0, vmax=10)
 
-    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffadad", RED])
+    reds = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#ffffff", RED, "#000000"])
     blues = matplotlib.colors.LinearSegmentedColormap.from_list("", ["white", BLUE])
     reds.set_under(color=(1, 1, 1, 0))
     blues.set_under(color=(1, 1, 1, 0))
@@ -177,20 +177,20 @@ def plot_development_and_dwellings(output_folder, fname, dev_fname, norm, arc_ma
         ax.set_extent(EXTENTS[zoom], crs=osgb)
 
         ax.imshow(
-            dev_data,
-            origin="upper",
-            extent=data_extent,
-            transform=osgb,
-            cmap=blues,
-            norm=dev_norm,
-        )
-        ax.imshow(
             data,
             origin="upper",
             extent=data_extent,
             transform=osgb,
             cmap=reds,
             norm=norm,
+        )
+        ax.imshow(
+            dev_data,
+            origin="upper",
+            extent=data_extent,
+            transform=osgb,
+            cmap=blues,
+            norm=dev_norm,
         )
 
         # add the colorbar
