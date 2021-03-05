@@ -78,7 +78,7 @@ def main(base_folder, output_folder):
     vmin, vmax = file_raster_min_max(dwellings_path)
     norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
     plot_development_and_dwellings(
-        base_folder, dwellings_path, development_path, norm, arc_mask
+        output_folder, dwellings_path, development_path, norm, arc_mask
     )
 
 
@@ -144,7 +144,7 @@ def plot_map(raster, raster_extent, extent, label=None, cmap="Greens", norm=None
     return ax
 
 
-def plot_development_and_dwellings(base_folder, fname, dev_fname, norm, arc_mask):
+def plot_development_and_dwellings(output_folder, fname, dev_fname, norm, arc_mask):
     with rasterio.open(fname) as ds:
         data, _ = rasterio.mask.mask(ds, arc_mask, crop=True)
         data = data[0]  # ignore first dimension, just want 2D array
@@ -238,7 +238,7 @@ def plot_development_and_dwellings(base_folder, fname, dev_fname, norm, arc_mask
             borderaxespad=0.0,
         )
 
-        output_fname = os.path.join(base_folder, f"dwellings_{zoom}.png")
+        output_fname = os.path.join(output_folder, f"dwellings_{zoom}.png")
         plt.savefig(output_fname)
 
         fig = plt.gcf()
